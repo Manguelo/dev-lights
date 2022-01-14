@@ -11,9 +11,9 @@ export class LightsService {
   async setColor(message, device) {
     // If we don't have any status exit out
     if (
-      !message.includes("fail") &&
-      !message.includes("deploy") &&
-      !message.includes("succe")
+      !message?.includes("fail") &&
+      !message?.includes("deploy") &&
+      !message?.includes("succe")
     ) {
       return;
     }

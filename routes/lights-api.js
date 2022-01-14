@@ -25,7 +25,8 @@ lightsApi
     if (!ctx.request.body?.event) {
       return ctx.ok();
     }
-    const message = ctx.request.body?.event?.text?.toLowerCase();
+
+    const message = JSON.stringify(ctx.request.body)?.toLowerCase();
 
     // The meat and potatoes
     await lightsSerivce.setColor(message, "2D:7F:D1:33:34:36:59:25");
