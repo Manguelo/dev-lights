@@ -22,7 +22,10 @@ lightsApi
     }
 
     // If we don't have an event, let's exit out we don't care
-    if (!ctx.request.body?.event) {
+    if (
+      !ctx.request.body?.event ||
+      ctx.request.body?.event?.subtype !== "bot_message"
+    ) {
       return ctx.ok();
     }
 
@@ -32,17 +35,18 @@ lightsApi
     await lightsSerivce.setColor(message, "2D:7F:D1:33:34:36:59:25");
     await lightsSerivce.setColor(message, "D6:D4:C8:33:34:36:68:36");
 
-    await lightsSerivce.toggleDevice(false, "2D:7F:D1:33:34:36:59:25");
-    await lightsSerivce.toggleDevice(false, "D6:D4:C8:33:34:36:68:36");
-    await new Promise((r) => setTimeout(r, 1000));
-    await lightsSerivce.toggleDevice(true, "2D:7F:D1:33:34:36:59:25");
-    await lightsSerivce.toggleDevice(true, "D6:D4:C8:33:34:36:68:36");
-    await new Promise((r) => setTimeout(r, 1000));
-    await lightsSerivce.toggleDevice(false, "2D:7F:D1:33:34:36:59:25");
-    await lightsSerivce.toggleDevice(false, "D6:D4:C8:33:34:36:68:36");
-    await new Promise((r) => setTimeout(r, 1000));
-    await lightsSerivce.toggleDevice(true, "2D:7F:D1:33:34:36:59:25");
-    await lightsSerivce.toggleDevice(true, "D6:D4:C8:33:34:36:68:36");
+    // Let's flash them!
+    // await lightsSerivce.toggleDevice(false, "2D:7F:D1:33:34:36:59:25");
+    // await lightsSerivce.toggleDevice(false, "D6:D4:C8:33:34:36:68:36");
+    // await new Promise((r) => setTimeout(r, 2000));
+    // await lightsSerivce.toggleDevice(true, "2D:7F:D1:33:34:36:59:25");
+    // await lightsSerivce.toggleDevice(true, "D6:D4:C8:33:34:36:68:36");
+    // await new Promise((r) => setTimeout(r, 2000));
+    // await lightsSerivce.toggleDevice(false, "2D:7F:D1:33:34:36:59:25");
+    // await lightsSerivce.toggleDevice(false, "D6:D4:C8:33:34:36:68:36");
+    // await new Promise((r) => setTimeout(r, 2000));
+    // await lightsSerivce.toggleDevice(true, "2D:7F:D1:33:34:36:59:25");
+    // await lightsSerivce.toggleDevice(true, "D6:D4:C8:33:34:36:68:36");
 
     return ctx.ok("status updated.");
   });
