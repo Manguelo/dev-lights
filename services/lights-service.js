@@ -49,4 +49,19 @@ export class LightsService {
       },
     });
   }
+
+  async toggleDevice(isOn, device) {
+    if (typeof isOn !== "boolean") {
+      return;
+    }
+
+    await client.put("/devices/control", {
+      device: device,
+      model: "H6072",
+      cmd: {
+        name: "turn",
+        value: isOn ? "on" : "off",
+      },
+    });
+  }
 }
