@@ -73,7 +73,7 @@ export class LightsService {
       g: 87,
       b: 51,
     };
-    const idle = {
+    const pending = {
       r: 178,
       g: 77,
       b: 250,
@@ -83,7 +83,7 @@ export class LightsService {
       g: 255,
       b: 87,
     };
-    const pending = {
+    const idle = {
       r: 51,
       g: 158,
       b: 255,
