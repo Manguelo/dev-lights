@@ -1,9 +1,23 @@
 import Router from "@koa/router";
+import { Subject, switchMap } from "rxjs";
 import { LightsService } from "../services/lights-service.js";
+import { Cancellation } from "../utils/cancellation.js";
+import { withCancellation } from "../utils/rxjs-util.js";
 
+// Service to contact Govee API
 let lightsSerivce = new LightsService();
 
+// Router
 export const lightsApi = new Router();
+
+// Queue to handle multiple requests to our devices
+const devices = ["2D:7F:D1:33:34:36:59:25", "D6:D4:C8:33:34:36:68:36"];
+const queue = new Subject();
+queue
+  .pipe(
+    switchMap((message) => withCancellation((ct) => updateLights(message, ct)))
+  )
+  .subscribe();
 
 lightsApi
   .get("/v1/__health", async (ctx) => {
@@ -21,39 +35,86 @@ lightsApi
       return ctx.ok(ctx.request.body["challenge"]);
     }
 
-    // If we don't have an event, let's exit out we don't care
-    if (
-      !ctx.request.body?.event ||
-      ctx.request.body?.event?.subtype !== "bot_message"
-    ) {
+    const message = JSON.stringify(ctx.request.body)?.toLowerCase();
+
+    if ((!ctx.request.body?.event || ctx.request.body?.event?.subtype !== "bot_message") && !message?.includes("super_secret_override:")) {
       return ctx.ok();
     }
 
-    const message = JSON.stringify(ctx.request.body)?.toLowerCase();
+    queue.next(message);
 
-    ctx.res.writeHead(200, { "Content-Type": "application/json" });
-    ctx.res.end(JSON.stringify({ all_good: "ok" }));
-
-    // The meat and potatoes
-    await lightsSerivce.setColor(message, "2D:7F:D1:33:34:36:59:25");
-    await lightsSerivce.setColor(message, "D6:D4:C8:33:34:36:68:36");
-    await new Promise((r) => setTimeout(r, 1500));
-
-    // Let's flash them!
-    await lightsSerivce.toggleDevice(false, "2D:7F:D1:33:34:36:59:25");
-    await lightsSerivce.toggleDevice(false, "D6:D4:C8:33:34:36:68:36");
-    await new Promise((r) => setTimeout(r, 1500));
-    await lightsSerivce.toggleDevice(true, "2D:7F:D1:33:34:36:59:25");
-    await lightsSerivce.toggleDevice(true, "D6:D4:C8:33:34:36:68:36");
-    await new Promise((r) => setTimeout(r, 1500));
-    await lightsSerivce.toggleDevice(false, "2D:7F:D1:33:34:36:59:25");
-    await lightsSerivce.toggleDevice(false, "D6:D4:C8:33:34:36:68:36");
-    await new Promise((r) => setTimeout(r, 1500));
-    await lightsSerivce.toggleDevice(true, "2D:7F:D1:33:34:36:59:25");
-    await lightsSerivce.toggleDevice(true, "D6:D4:C8:33:34:36:68:36");
-    await new Promise((r) => setTimeout(r, 1500));
-
-    // Set them to idle
-    await lightsSerivce.setColor(message, "D6:D4:C8:33:34:36:68:36", true);
-    await lightsSerivce.setColor(message, "2D:7F:D1:33:34:36:59:25", true);
+    return ctx.ok({ message: "Status updated." });
   });
+
+/**
+ * Runs the lights animation for all devices.
+ *
+ * @param {*} message
+ * @param {*} ct
+ */
+async function updateLights(message, ct) {
+  try {
+    // Govee
+    await alertGovee(message, false, ct);
+
+    // LIFX
+    await alertLifx(message, ct);
+
+    // Set Govee idle
+    await alertGovee(message, true, ct);
+  } catch (ex) {
+    if (ex instanceof Cancellation) {
+      console.log("cancelling request...");
+    } else {
+      console.error(ex);
+    }
+  }
+}
+
+/**
+ * Sets the color for a specified message.
+ * `shouldSetIdle` will set the lights to their default color
+ * as long as the message `isPass`.
+ *
+ * @param {*} message
+ * @param {*} shouldSetIdle
+ * @param {*} ct
+ */
+async function alertGovee(message, shouldSetIdle, ct) {
+  await Promise.all(
+    devices.map(async (id) => {
+      await lightsSerivce.setColorGovee(message, id, shouldSetIdle, ct);
+    })
+  );
+}
+
+/**
+ * Alerts all LIFX devices.
+ * 
+ * @param {*} message 
+ * @param {*} ct 
+ */
+async function alertLifx(message, ct) {
+  await Promise.all([
+    await lightsSerivce.disableEffects(ct),
+    await lightsSerivce.breatheEffectLifx(message, ct),
+    await ct.race(new Promise((r) => setTimeout(r, 15000))),
+    await lightsSerivce.setColorLifx(message, ct),
+  ])
+}
+
+/**
+ * Flashes all govee devices once.
+ *
+ * @param {*} ct
+ */
+// async function flash(ct) {
+//   await Promise.all(
+//     devices.map(async (id) => {
+//       await lightsSerivce.toggleDeviceGovee(false, id, ct);
+//       await ct.race(new Promise((r) => setTimeout(r, 1500)));
+//       await lightsSerivce.toggleDeviceGovee(true, id, ct);
+//       await ct.race(new Promise((r) => setTimeout(r, 1500)));
+//     })
+//   );
+// }
