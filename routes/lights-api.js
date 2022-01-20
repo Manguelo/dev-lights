@@ -31,12 +31,29 @@ lightsApi
 
     const message = JSON.stringify(ctx.request.body)?.toLowerCase();
 
+    ctx.res.writeHead(200, { "Content-Type": "application/json" });
+    ctx.res.end(JSON.stringify({ all_good: "ok" }));
+
     // The meat and potatoes
     await lightsSerivce.setColor(message, "2D:7F:D1:33:34:36:59:25");
     await lightsSerivce.setColor(message, "D6:D4:C8:33:34:36:68:36");
     await new Promise((r) => setTimeout(r, 1500));
-    await lightsSerivce.setColor("default", "2D:7F:D1:33:34:36:59:25");
-    await lightsSerivce.setColor("default", "D6:D4:C8:33:34:36:68:36");
 
-    return ctx.ok("status updated.");
+    // Let's flash them!
+    await lightsSerivce.toggleDevice(false, "2D:7F:D1:33:34:36:59:25");
+    await lightsSerivce.toggleDevice(false, "D6:D4:C8:33:34:36:68:36");
+    await new Promise((r) => setTimeout(r, 1500));
+    await lightsSerivce.toggleDevice(true, "2D:7F:D1:33:34:36:59:25");
+    await lightsSerivce.toggleDevice(true, "D6:D4:C8:33:34:36:68:36");
+    await new Promise((r) => setTimeout(r, 1500));
+    await lightsSerivce.toggleDevice(false, "2D:7F:D1:33:34:36:59:25");
+    await lightsSerivce.toggleDevice(false, "D6:D4:C8:33:34:36:68:36");
+    await new Promise((r) => setTimeout(r, 1500));
+    await lightsSerivce.toggleDevice(true, "2D:7F:D1:33:34:36:59:25");
+    await lightsSerivce.toggleDevice(true, "D6:D4:C8:33:34:36:68:36");
+    await new Promise((r) => setTimeout(r, 1500));
+
+    // Set them to idle
+    await lightsSerivce.setColor(message, "D6:D4:C8:33:34:36:68:36", true);
+    await lightsSerivce.setColor(message, "2D:7F:D1:33:34:36:59:25", true);
   });

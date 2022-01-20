@@ -24,8 +24,8 @@ export class LightsService {
   ];
   pendingKeywords = ["deploy"];
 
-  async setColor(message, device) {
-    const color = this.getColorForMessage(message);
+  async setColor(message, device, shouldSetIdle) {
+    const color = this.getColorForMessage(message, shouldSetIdle);
 
     // If we don't have any status exit out
     if (!color) {
@@ -58,13 +58,12 @@ export class LightsService {
     });
   }
 
-  getColorForMessage(message) {
+  getColorForMessage(message, shouldSetIdle) {
     const isFail = this.errorKeywords.some((s) => message?.includes(s));
     const isPass = this.successKeywords.some((s) => message?.includes(s));
     const isPending = this.pendingKeywords.some((s) => message?.includes(s));
-    const isIdle = message?.includes("default");
 
-    if (!isFail && !isPass && !isPending && !idle) {
+    if (!isFail && !isPass && !isPending && !shouldSetIdle) {
       return;
     }
 
@@ -90,6 +89,12 @@ export class LightsService {
       b: 255,
     };
 
-    return isPass ? pass : isFail ? fail : isPending ? pending : idle;
+    return shouldSetIdle && isPass
+      ? idle
+      : isPass
+      ? pass
+      : isFail
+      ? fail
+      : pending;
   }
 }
