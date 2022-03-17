@@ -22,16 +22,17 @@
   },
   "homepage": "https://github.com/hatuanem199801/express-vercel#readme",
   "dependencies": {
-    "bristol": "^0.4.0",
     "@koa/cors": "^3.1.0",
     "@koa/router": "^10.1.1",
     "axios": "^0.24.0",
+    "bristol": "^0.4.0",
     "express": "^4.17.1",
     "koa": "^2.13.1",
     "koa-bodyparser": "^4.3.0",
     "koa-compress": "^5.1.0",
     "koa-convert": "^2.0.0",
     "koa-respond": "^2.1.0",
+    "octokit": "^1.7.1",
     "palin": "^2.3.0",
     "rxjs": "^7.5.2"
   }

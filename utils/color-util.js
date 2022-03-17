@@ -37,6 +37,10 @@ const idle = {
   b: 255,
 };
 
+export function isFail(message) {
+  return errorKeywords.some((s) => message?.includes(s));
+}
+
 export function getSceneForMessage(message) {
   const isFail = errorKeywords.some((s) => message?.includes(s));
   const isPass = successKeywords.some((s) => message?.includes(s));

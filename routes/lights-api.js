@@ -3,6 +3,7 @@ import { Subject, switchMap } from "rxjs";
 import { LightsService } from "../services/lights-service.js";
 import { Cancellation } from "../utils/cancellation.js";
 import { withCancellation } from "../utils/rxjs-util.js";
+import { isFail } from "../utils/color-util.js";
 
 // Service to contact Govee API
 let lightsSerivce = new LightsService();
@@ -62,6 +63,11 @@ async function updateLights(message, ct) {
 
     // Set Govee idle
     await alertGovee(message, true, ct);
+
+    // Update logs
+    if (isFail(message)) {
+      await lightsSerivce.updateGitHubErrors(ct)
+    }
   } catch (ex) {
     if (ex instanceof Cancellation) {
       console.log("cancelling request...");

@@ -1,4 +1,5 @@
 import axios from "axios";
+import { Octokit } from "octokit";
 import { getColorForMessage, getHexColorForMessage, getSceneForMessage, shouldDisplayPendingAction } from "../utils/color-util.js";
 
 const goveeClient = axios.create({
@@ -11,9 +12,11 @@ const goveeClient = axios.create({
 const lifxClient = axios.create({
   baseURL: "https://api.lifx.com/v1",
   headers: {
-    'Authorization': "Bearer c46b8d72b2ef71e5c07eaac9bdba681d033682e1e8598e47cfbc8b83371e528a",
+    'Authorization': `Bearer ${process.env.LIFX_API_KEY}`,
   },
 });
+
+const octokit = new Octokit({ auth: process.env.GITHUB_PAT });
 
 export class LightsService {
   /**
@@ -140,5 +143,35 @@ export class LightsService {
     ct.throwIfCancelled()
 
     await lifxClient.post("/lights/all/effects/off")
+  }
+
+  /**
+   * Updates a log file on GitHub to display ammount of errors in a single day.
+   * The log file will be reset if it is a new day.
+   * 
+   * @param {*} ct 
+   */
+  async updateGitHubErrors(ct) {
+    ct.throwIfCancelled()
+
+    let logs = await octokit.rest.repos.getContent({
+      owner: 'manguelo',
+      repo: process.env.LOGS_REPO,
+      path: 'logs.json',
+    })
+
+    let content = JSON.parse(Buffer.from(logs.data.content, 'base64').toString('ascii'))
+    let currentTime = new Date(Date.now())
+    let lastModified = new Date(Date.parse(content.last_modified))
+    var reset = currentTime.getDate() > lastModified.getDate()
+
+    await octokit.rest.repos.createOrUpdateFileContents({
+      owner: 'Manguelo',
+      repo: process.env.LOGS_REPO,
+      path: 'logs.json',
+      message: 'Update logs',
+      sha: logs.data.sha,
+      content: Buffer.from(`{"errors": ${reset ? 1 : content.errors + 1}, "last_modified": "${currentTime.toISOString()}"}`).toString('base64')
+    })
   }
 }
