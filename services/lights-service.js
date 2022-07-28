@@ -117,7 +117,7 @@ export class LightsService {
 
     await lifxClient.post("/lights/all/effects/breathe", {
       period: 3,
-      cycles: 1,
+      cycles: 5,
       color: color,
       from_color: "#111111",
       power_on: true,

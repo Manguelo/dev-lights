@@ -108,7 +108,7 @@ async function alertLifx(message, ct) {
   await Promise.all([
     await lightsSerivce.disableEffects(ct),
     await lightsSerivce.breatheEffectLifx(message, ct),
-    await ct.race(new Promise((r) => setTimeout(r, 15000))),
+    await ct.race(new Promise((r) => setTimeout(r, 13000))), // Set timeout to 15s if govee lights are enabled
     await lightsSerivce.setColorLifx(message, ct),
   ]);
 }
