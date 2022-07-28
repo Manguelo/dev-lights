@@ -38,7 +38,11 @@ lightsApi
 
     const message = JSON.stringify(ctx.request.body)?.toLowerCase();
 
-    if ((!ctx.request.body?.event || ctx.request.body?.event?.subtype !== "bot_message") && !message?.includes("super_secret_override:")) {
+    if (
+      (!ctx.request.body?.event ||
+        ctx.request.body?.event?.subtype !== "bot_message") &&
+      !message?.includes("super_secret_override:")
+    ) {
       return ctx.ok();
     }
 
@@ -56,17 +60,17 @@ lightsApi
 async function updateLights(message, ct) {
   try {
     // Govee
-    await alertGovee(message, false, ct);
+    // await alertGovee(message, false, ct);
 
     // LIFX
     await alertLifx(message, ct);
 
     // Set Govee idle
-    await alertGovee(message, true, ct);
+    // await alertGovee(message, true, ct);
 
     // Update logs
     if (isFail(message)) {
-      await lightsSerivce.updateGitHubErrors(ct)
+      await lightsSerivce.updateGitHubErrors(ct);
     }
   } catch (ex) {
     if (ex instanceof Cancellation) {
@@ -96,9 +100,9 @@ async function alertGovee(message, shouldSetIdle, ct) {
 
 /**
  * Alerts all LIFX devices.
- * 
- * @param {*} message 
- * @param {*} ct 
+ *
+ * @param {*} message
+ * @param {*} ct
  */
 async function alertLifx(message, ct) {
   await Promise.all([
@@ -106,7 +110,7 @@ async function alertLifx(message, ct) {
     await lightsSerivce.breatheEffectLifx(message, ct),
     await ct.race(new Promise((r) => setTimeout(r, 15000))),
     await lightsSerivce.setColorLifx(message, ct),
-  ])
+  ]);
 }
 
 /**
