@@ -1,11 +1,11 @@
 {
-  "name": "express-vercel",
+  "name": "dev-lights",
   "version": "1.0.0",
-  "description": "Deploy express js to vercel.",
+  "description": "Lights lights flashy lights",
   "main": "index.js",
   "type": "module",
   "engines": {
-    "node": "14.x"
+    "node": "16.x"
   },
   "scripts": {
     "start": "node index.js"

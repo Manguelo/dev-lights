@@ -69,9 +69,9 @@ async function updateLights(message, ct) {
     // await alertGovee(message, true, ct);
 
     // Update logs
-    if (isFail(message)) {
-      await lightsSerivce.updateGitHubErrors(ct);
-    }
+    // if (isFail(message)) {
+    //   await lightsSerivce.updateGitHubErrors(ct);
+    // }
   } catch (ex) {
     if (ex instanceof Cancellation) {
       console.log("cancelling request...");
