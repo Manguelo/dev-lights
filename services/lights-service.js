@@ -122,6 +122,7 @@ export class LightsService {
       from_color: "#111111",
       power_on: true,
       persist: false,
+      selector: "all",
     });
   }
 
@@ -136,6 +137,7 @@ export class LightsService {
 
     await lifxClient.post("/lights/all/effects/move", {
       period: 10,
+      selector: "all",
     });
   }
 
@@ -147,7 +149,9 @@ export class LightsService {
   async disableEffects(ct) {
     ct.throwIfCancelled();
 
-    await lifxClient.post("/lights/all/effects/off");
+    await lifxClient.post("/lights/all/effects/off", {
+      selector: "all",
+    });
   }
 
   /**

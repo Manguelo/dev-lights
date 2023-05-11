@@ -50,7 +50,7 @@ lightsApi
 
     // Ideally we want to use switchMap, but vercel doesn't work nice with it. :(
     // queue.next(message);
-    await updateLights(message, createCancellationTokenSource());
+    await updateLights(message, createCancellationTokenSource().token);
 
     return ctx.ok({ message: "Status updated." });
   });
