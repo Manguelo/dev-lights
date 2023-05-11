@@ -48,7 +48,7 @@ lightsApi
 
     // Ideally we want to use switchMap, but vercel doesn't work nice with it. :(
     // queue.next(message);
-    updateLights(message, ct);
+    await updateLights(message, ct);
 
     return ctx.ok({ message: "Status updated." });
   });
