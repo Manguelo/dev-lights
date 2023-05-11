@@ -1,9 +1,11 @@
 import Router from "@koa/router";
 import { Subject, switchMap } from "rxjs";
 import { LightsService } from "../services/lights-service.js";
-import { Cancellation } from "../utils/cancellation.js";
+import {
+  Cancellation,
+  createCancellationTokenSource,
+} from "../utils/cancellation.js";
 import { withCancellation } from "../utils/rxjs-util.js";
-import { isFail } from "../utils/color-util.js";
 
 // Service to contact Govee API
 let lightsSerivce = new LightsService();
@@ -48,7 +50,7 @@ lightsApi
 
     // Ideally we want to use switchMap, but vercel doesn't work nice with it. :(
     // queue.next(message);
-    await updateLights(message, ct);
+    await updateLights(message, createCancellationTokenSource());
 
     return ctx.ok({ message: "Status updated." });
   });
