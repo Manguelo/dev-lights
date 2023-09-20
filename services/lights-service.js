@@ -7,13 +7,6 @@ import {
   shouldDisplayPendingAction,
 } from "../utils/color-util.js";
 
-const goveeClient = axios.create({
-  baseURL: "https://developer-api.govee.com/v1",
-  headers: {
-    "Govee-API-Key": process.env.GOVEE_API_KEY,
-  },
-});
-
 const lifxClient = axios.create({
   baseURL: "https://api.lifx.com/v1",
   headers: {
@@ -24,59 +17,6 @@ const lifxClient = axios.create({
 const octokit = new Octokit({ auth: process.env.GITHUB_PAT });
 
 export class LightsService {
-  /**
-   * Sets the color for a `deviceId` based on the apssed `message`.
-   *
-   * @param {*} message
-   * @param {*} deviceId
-   * @param {*} shouldSetIdle
-   * @param {*} ct
-   * @returns
-   */
-  async setColorGovee(message, deviceId, shouldSetIdle, ct) {
-    ct.throwIfCancelled();
-
-    const color = getColorForMessage(message, shouldSetIdle);
-
-    if (!color) {
-      return;
-    }
-
-    await goveeClient.put("/devices/control", {
-      device: deviceId,
-      model: "H6072",
-      cmd: {
-        name: "color",
-        value: color,
-      },
-    });
-  }
-
-  /**
-   * Turns the passed `deviceId` on/off.
-   *
-   * @param {*} isOn
-   * @param {*} deviceId
-   * @param {*} ct
-   * @returns
-   */
-  async toggleDeviceGovee(isOn, deviceId, ct) {
-    ct.throwIfCancelled();
-
-    if (typeof isOn !== "boolean") {
-      return;
-    }
-
-    await goveeClient.put("/devices/control", {
-      device: deviceId,
-      model: "H6072",
-      cmd: {
-        name: "turn",
-        value: isOn ? "on" : "off",
-      },
-    });
-  }
-
   /**
    * Sets the static light color for a message.
    * If a message is considered pending an action, the move effect with be applied.
@@ -151,42 +91,6 @@ export class LightsService {
 
     await lifxClient.post("/lights/all/effects/off", {
       selector: "all",
-    });
-  }
-
-  /**
-   * Updates a log file on GitHub to display ammount of errors in a single day.
-   * The log file will be reset if it is a new day.
-   *
-   * @param {*} ct
-   */
-  async updateGitHubErrors(ct) {
-    ct.throwIfCancelled();
-
-    let logs = await octokit.rest.repos.getContent({
-      owner: "manguelo",
-      repo: process.env.LOGS_REPO,
-      path: "logs.json",
-    });
-
-    let content = JSON.parse(
-      Buffer.from(logs.data.content, "base64").toString("ascii")
-    );
-    let currentTime = new Date(Date.now());
-    let lastModified = new Date(Date.parse(content.last_modified));
-    var reset = currentTime.getDate() > lastModified.getDate();
-
-    await octokit.rest.repos.createOrUpdateFileContents({
-      owner: "Manguelo",
-      repo: process.env.LOGS_REPO,
-      path: "logs.json",
-      message: "Update logs",
-      sha: logs.data.sha,
-      content: Buffer.from(
-        `{"errors": ${
-          reset ? 1 : content.errors + 1
-        }, "last_modified": "${currentTime.toISOString()}"}`
-      ).toString("base64"),
     });
   }
 }

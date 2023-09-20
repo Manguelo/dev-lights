@@ -7,14 +7,13 @@ import {
 } from "../utils/cancellation.js";
 import { withCancellation } from "../utils/rxjs-util.js";
 
-// Service to contact Govee API
+// Service to contact Lifx API
 let lightsSerivce = new LightsService();
 
 // Router
 export const lightsApi = new Router();
 
 // Queue to handle multiple requests to our devices
-const devices = ["2D:7F:D1:33:34:36:59:25", "D6:D4:C8:33:34:36:68:36"];
 const queue = new Subject();
 queue
   .pipe(
@@ -32,13 +31,18 @@ lightsApi
       `We gucci brah! Govee key found: ${key.substring(key.length - 4)}`
     );
   })
-  .post("/v1/govee", async (ctx) => {
+  .post("/v1/button", async (ctx) => {
     // Slack challenge
     if (ctx.request.body["challenge"]) {
       return ctx.ok(ctx.request.body["challenge"]);
     }
 
     const message = JSON.stringify(ctx.request.body)?.toLowerCase();
+
+    if (message?.includes("say:")) {
+      console.log(message);
+      return ctx.ok();
+    }
 
     if (
       (!ctx.request.body?.event ||
@@ -48,9 +52,7 @@ lightsApi
       return ctx.ok();
     }
 
-    // Ideally we want to use switchMap, but vercel doesn't work nice with it. :(
-    // queue.next(message);
-    await updateLights(message, createCancellationTokenSource().token);
+    queue.next(message);
 
     return ctx.ok({ message: "Status updated." });
   });
@@ -63,19 +65,8 @@ lightsApi
  */
 async function updateLights(message, ct) {
   try {
-    // Govee
-    // await alertGovee(message, false, ct);
-
     // LIFX
     await alertLifx(message, ct);
-
-    // Set Govee idle
-    // await alertGovee(message, true, ct);
-
-    // Update logs
-    // if (isFail(message)) {
-    //   await lightsSerivce.updateGitHubErrors(ct);
-    // }
   } catch (ex) {
     if (ex instanceof Cancellation) {
       console.log("cancelling request...");
@@ -83,23 +74,6 @@ async function updateLights(message, ct) {
       console.error(ex);
     }
   }
-}
-
-/**
- * Sets the color for a specified message.
- * `shouldSetIdle` will set the lights to their default color
- * as long as the message `isPass`.
- *
- * @param {*} message
- * @param {*} shouldSetIdle
- * @param {*} ct
- */
-async function alertGovee(message, shouldSetIdle, ct) {
-  await Promise.all(
-    devices.map(async (id) => {
-      await lightsSerivce.setColorGovee(message, id, shouldSetIdle, ct);
-    })
-  );
 }
 
 /**
@@ -116,19 +90,3 @@ async function alertLifx(message, ct) {
     await lightsSerivce.setColorLifx(message, ct),
   ]);
 }
-
-/**
- * Flashes all govee devices once.
- *
- * @param {*} ct
- */
-// async function flash(ct) {
-//   await Promise.all(
-//     devices.map(async (id) => {
-//       await lightsSerivce.toggleDeviceGovee(false, id, ct);
-//       await ct.race(new Promise((r) => setTimeout(r, 1500)));
-//       await lightsSerivce.toggleDeviceGovee(true, id, ct);
-//       await ct.race(new Promise((r) => setTimeout(r, 1500)));
-//     })
-//   );
-// }
